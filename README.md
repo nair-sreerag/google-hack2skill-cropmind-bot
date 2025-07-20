@@ -1,0 +1,1 @@
+# google-hack2skill-cropmind-bot

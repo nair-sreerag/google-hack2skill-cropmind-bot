@@ -1,0 +1,9 @@
+{
+  "name": "hackathon",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "firebase-tools": "^14.11.0"
+  }
+}

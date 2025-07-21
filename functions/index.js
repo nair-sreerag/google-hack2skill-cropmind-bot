@@ -12,10 +12,14 @@ const {onRequest} = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 const express = require("express");
 const cors = require("cors");
-const {sendWhatsappMessage} = require("./src/response");
+const {sendWhatsappMessage, sendMessage, accountSid, authToken, bufferedToken} = require("./src/response");
 
 // Import Dialogflow CX services
 const { sendMessageToAgent, healthCheck } = require("./src/chatEndpoint");
+const { DialogflowCXService } = require("./src/dialogflowCXService");
+const { default: axios } = require("axios");
+const speech = require('@google-cloud/speech').v1p1beta1;
+const gtts = new speech.SpeechClient();
 
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
@@ -77,7 +81,7 @@ app.post("/whatsapp-callback", async (req, res) => {
   try {
     console.log("WhatsApp callback =>>> ", req.body);
 
-    const {WaId, Body, To, From} = req.body;
+    // const {WaId, Body, To, From} = req.body;
 
     // Commented out for now - can be enabled as needed
     // if (!Body || !WaId) {
@@ -129,6 +133,109 @@ app.post("/whatsapp-callback", async (req, res) => {
     //   }
     // }
 
+
+    // const response = await sendMessageToAgent(); 
+
+
+    // extract details from body
+    // send this to the aiFunction
+    // get response
+    // send it back using twilio
+    
+    const { WaId,  To, From, sessionId, languageCode, MediaContentType0, MediaUrl0 } = req.body;
+
+    let { Body: message, } = req.body;
+
+    const dialogflowService = new DialogflowCXService();
+
+
+    switch(MediaContentType0) {
+
+      case 'audio/ogg' : { 
+        
+        console.log("Got audio file from webhook", MediaUrl0, bufferedToken);
+
+        let audioResponse = await axios.get(MediaUrl0, {
+          responseType: 'arraybuffer',
+          maxRedirects: 5,
+          headers: {
+            Authorization: 'Basic ' + bufferedToken
+          }
+        });
+
+
+        // audioResponse = await axios.get('https://storage.googleapis.com/cloud-samples-tests/speech/brooklyn.flac',{
+        //   responseType: 'arraybuffer',
+        // })
+
+        const audioBuffer = Buffer.from(audioResponse.data, 'binary');
+
+
+        console.log("audioBuffer => ", audioBuffer);
+
+        const [ response ] = await gtts.recognize({
+          audio: {
+            content: audioBuffer.toString('base64')
+          },
+          config: {
+            encoding: 'OGG_OPUS',
+            sampleRateHertz: 16000,
+            languageCode: 'en-US',
+            // enableAutomaticPunctuation: true,
+            // enableSeparateRecognitionPerChannel: true,
+          },
+        });
+
+        console.log("response => ", response);
+
+
+        const transcripts = response.results.map(r => {
+          console.log("got this transcript =>> ", r.alternatives[0].transcript);
+          return r.alternatives[0].transcript;
+        }).join('\n');
+
+        message = transcripts;
+        
+        break; 
+      }
+      
+      case 'image/jpeg' : { 
+        
+        
+        break;
+       }
+      
+      default : {
+        console.log("Got text message from webhook", req.body.Body);
+        message = req.body.Body;
+        break;
+      }
+
+    }
+
+
+
+    
+    // Generate session ID if not provided
+    const finalSessionId = `whatsapp-${WaId}` || dialogflowService.generateSessionId();
+    
+    console.log(`Processing message: "${message}" for session: ${finalSessionId}`);
+
+    // Send message to Dialogflow CX
+    const response = await dialogflowService.sendMessage(
+      message, 
+      finalSessionId, 
+      languageCode || 'en'
+    );
+
+    console.log("response ->> ", JSON.stringify(response));
+
+    await sendWhatsappMessage(response.messages[0], To, From);
+
+    return res.json({
+      success: true
+    })
+
   } catch (error) {
     logger.error("WhatsApp callback error:", error);
     return res.status(500).json({
@@ -139,6 +246,11 @@ app.post("/whatsapp-callback", async (req, res) => {
 });
 
 // Export the Express app as a single Cloud Function
-exports.api = onRequest({
-  invoker: "public",
-}, app);
+// exports.api = onRequest({
+//   invoker: "public",
+// }, app);
+
+
+app.listen(5050, () => {
+  console.log("Server listening on port 5050")
+})

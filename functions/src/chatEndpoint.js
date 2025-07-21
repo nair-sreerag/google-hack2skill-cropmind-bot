@@ -57,9 +57,6 @@ async function sendMessageToAgent(req, res) {
       languageCode || 'en'
     );
 
-
-    
-
     // Return successful response
     res.status(200).json({
       success: true,

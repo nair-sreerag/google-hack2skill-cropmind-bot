@@ -5,14 +5,23 @@ const accountSid = "AC5eb00789706e66f99a5845f749a0e6bb";
 const authToken = "b27bb9337b344a797aed211243b178d9";
 const client = twilio(accountSid, authToken);
 
+
+// console.log("bufferedToken => ", Buffer.from(`${accountSid}:${authToken}`),  module.exports.bufferedToken);
+
+
 module.exports = {
-  sendMessage: async (method, url, headers, data) => {
+
+  bufferedToken : Buffer.from(`${accountSid}:${authToken}`).toString('base64'),
+  
+  sendMessage: async (method, url, headers, data, meta) => {
+    console.log("Sending message", url, headers, data, meta);
     return await axios(
         {
           method,
           url,
           data,
           headers,
+          ...meta
         },
     );
   },

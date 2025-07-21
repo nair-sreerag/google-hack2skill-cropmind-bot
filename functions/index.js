@@ -21,6 +21,10 @@ const { default: axios } = require("axios");
 const speech = require('@google-cloud/speech').v1p1beta1;
 const gtts = new speech.SpeechClient();
 
+
+const vision = require('@google-cloud/vision');
+const annotatorClient = new vision.ImageAnnotatorClient();
+
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
 // traffic spikes by instead downgrading performance. This limit is a
@@ -200,10 +204,45 @@ app.post("/whatsapp-callback", async (req, res) => {
       }
       
       case 'image/jpeg' : { 
+      
+
+        console.log("Got image from webhook", MediaUrl0);
+
+        let imageResponse = await axios.get(MediaUrl0, {
+          responseType: 'arraybuffer',
+          maxRedirects: 5,
+          headers: {
+            Authorization: 'Basic ' + bufferedToken
+          }
+        });
+
+        console.log("imageResponse => ", imageResponse);
+
+        const imageBuffer = Buffer.from(imageResponse.data, 'binary');
+        const base64Image = imageBuffer.toString('base64');
+
         
-        
+        const [result] = await annotatorClient.annotateImage({
+          image: { content: base64Image, },
+          features: [
+            { type: 'LABEL_DETECTION' },
+            { type: 'TEXT_DETECTION' }, // optional
+          ],
+        });
+
+        console.log("image annotation result => ", result);
+
+        const labels = result.labelAnnotations.map(l => l.description);
+        const detectedText = result.textAnnotations?.[0]?.description || '';
+
+        console.log("labels => ", labels);
+        console.log("detectedText => ", detectedText);
+
+        message = detectedText;
+
+
         break;
-       }
+      }
       
       default : {
         console.log("Got text message from webhook", req.body.Body);

@@ -443,6 +443,11 @@
   resolved "https://registry.npmjs.org/@google-cloud/promisify/-/promisify-4.0.0.tgz"
   integrity sha512-Orxzlfb9c67A15cq2JQEyVc7wEsmFBmHjZWZYQMUyJ1qivXyMwdyNOs9odi79hze+2zqdTtu1E19IM/FtqZ10g==
 
+"@google-cloud/promisify@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.npmjs.org/@google-cloud/promisify/-/promisify-5.0.0.tgz"
+  integrity sha512-N8qS6dlORGHwk7WjGXKOSsLjIjNINCPicsOX6gyyLiYk7mq3MtII96NZ9N2ahwA2vnkLmZODOIH9rlNniYWvCQ==
+
 "@google-cloud/speech@^7.2.0":
   version "7.2.0"
   resolved "https://registry.npmjs.org/@google-cloud/speech/-/speech-7.2.0.tgz"
@@ -475,6 +480,15 @@
     retry-request "^7.0.0"
     teeny-request "^9.0.0"
     uuid "^8.0.0"
+
+"@google-cloud/vision@^5.3.1":
+  version "5.3.1"
+  resolved "https://registry.npmjs.org/@google-cloud/vision/-/vision-5.3.1.tgz"
+  integrity sha512-I+/1Lasw8GHO45tX5TgL7i3HULnAhuuAx7EdCZA3N/W/O5Ncwq0DCEwzLSJCKLgvHRu6Ad2XZIVuPNsQVsd+kA==
+  dependencies:
+    "@google-cloud/promisify" "^5.0.0"
+    google-gax "^5.0.0"
+    is "^3.3.0"
 
 "@grpc/grpc-js@^1.10.9", "@grpc/grpc-js@^1.12.6":
   version "1.13.4"
@@ -2582,6 +2596,11 @@ is-stream@^2.0.0:
   version "2.0.1"
   resolved "https://registry.npmjs.org/is-stream/-/is-stream-2.0.1.tgz"
   integrity sha512-hFoiJiTl63nn+kstHGBtewWSKnQLpyb155KHheA1l39uvtO9nWIop1p3udqPcUd/xbF1VLMO4n7OI6p7RbngDg==
+
+is@^3.3.0:
+  version "3.3.2"
+  resolved "https://registry.npmjs.org/is/-/is-3.3.2.tgz"
+  integrity sha512-a2xr4E3s1PjDS8ORcGgXpWx6V+liNs+O3JRD2mb9aeugD7rtkkZ0zgLdYgw0tWsKhsdiezGYptSiMlVazCBTuQ==
 
 isexe@^2.0.0:
   version "2.0.0"

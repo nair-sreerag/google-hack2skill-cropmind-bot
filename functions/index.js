@@ -12,13 +12,10 @@ const {onRequest} = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 const express = require("express");
 const cors = require("cors");
-const {sessionExists} = require("./src/session");
 const {sendWhatsappMessage} = require("./src/response");
-const {listLevels, startingMessage} = require("./src/messages");
-// const {createOrUpdateSession} = require("./src/session");
 
-// const {debugFirestore} = require("./src/debug-firestore");
-
+// Import Dialogflow CX services
+const { sendMessageToAgent, healthCheck } = require("./src/chatEndpoint");
 
 // For cost control, you can set the maximum number of containers that can be
 // running at the same time. This helps mitigate the impact of unexpected
@@ -32,12 +29,8 @@ const {listLevels, startingMessage} = require("./src/messages");
 // this will be the maximum concurrent request count.
 setGlobalOptions({maxInstances: 10});
 
-// const START = "hi";
+// Import services
 
-const INITIAL_MESSAGES = [
-  "hi",
-  "/start",
-];
 
 // Create Express app
 const app = express();
@@ -47,6 +40,8 @@ app.use(cors({origin: true}));
 
 // Parse JSON bodies
 app.use(express.json());
+
+// RELEVANT ENDPOINTS
 
 /**
  * Ping endpoint - returns a simple pong response with status information
@@ -65,74 +60,85 @@ app.get("/ping", (req, res) => {
   res.status(200).json(pingResponse);
 });
 
-
-app.post("/whatsapp-callback", async (req, res) => {
-  console.log("post body =>>> ", req.body);
-
-  //   const response = await createOrUpdateSession("+919356099515", {
-  //     surname: "kumar",
-  //   });
-
-  //   console.log("response =>> ", JSON.stringify(response));
-
-
-  // switch() {
-
-  // }
-
-
-  const doesSessionExist = await sessionExists(req.body.WaId);
-
-  console.log("doesSessionExist => ", doesSessionExist);
-
-  if (doesSessionExist) {
-    console.log("session exists");
-  } else {
-    if (INITIAL_MESSAGES.includes(req.body.Body.toLowerCase())) {
-      // return the list of languages wala flow
-      const response = await sendWhatsappMessage(listLevels(),
-          req.body.To, req.body.From);
-
-      console.log("if response => ", response);
-
-      return res.status(200).json({
-        message: "success",
-      });
-    } else {
-      const response = await sendWhatsappMessage(startingMessage(),
-          req.body.To, req.body.From);
-
-      console.log("else response => ", response);
-
-      return res.status(200).json({
-        message: "success",
-      });
-    }
-  }
-
-
-  return res.status(200).json({
-    message: "Whatsapp callback received",
-    timestamp: new Date().toISOString(),
-  });
-});
+/**
+ * Dialogflow CX Chat endpoint - sends messages to Google Conversational Agent
+ * POST /chat
+ * Body: { "message": "Hello", "sessionId": "optional", "languageCode": "en" }
+ */
+app.post("/chat", sendMessageToAgent);
 
 /**
- * Root endpoint - API info
+ * Health check endpoint for Dialogflow CX service
+ * GET /health
  */
-app.get("/", (req, res) => {
-  res.status(200).json({
-    message: "Firebase Functions API",
-    version: "1.0.0",
-    endpoints: ["/ping", "/hello"],
-    timestamp: new Date().toISOString(),
-  });
-});
+app.get("/health", healthCheck);
 
+app.post("/whatsapp-callback", async (req, res) => {
+  try {
+    console.log("WhatsApp callback =>>> ", req.body);
+
+    const {WaId, Body, To, From} = req.body;
+
+    // Commented out for now - can be enabled as needed
+    // if (!Body || !WaId) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     error: "Missing required WhatsApp fields (WaId, Body)",
+    //   });
+    // }
+
+    // // Check if session exists to get language preference
+    // const doesSessionExist = await sessionExists(WaId);
+    // console.log("doesSessionExist => ", doesSessionExist);
+
+    // if (doesSessionExist) {
+    //   // Process through Dialogflow for existing users
+    //   const result = await dialogflowBot
+    //       .processUserIntent(Body, WaId, "whatsapp");
+
+    //   if (result.success && result.response.message) {
+    //     const response = await sendWhatsappMessage(
+    //         result.response.message,
+    //         To,
+    //         From,
+    //     );
+    //     console.log("Dialogflow response sent:", response);
+    //   }
+
+    //   return res.status(200).json({
+    //     success: true,
+    //     message: "Message processed through Dialogflow",
+    //     result,
+    //   });
+    // } else {
+    //   // Handle initial messages for new users
+    //   if (INITIAL_MESSAGES.includes(Body.toLowerCase())) {
+    //     const response = await sendWhatsappMessage(listLevels(), To, From);
+    //     console.log("Initial menu response => ", response);
+
+    //     return res.status(200).json({
+    //       message: "success",
+    //     });
+    //   } else {
+    //     const response = await sendWhatsappMessage(startingMessage(), To, From);
+    //     console.log("Starting message response => ", response);
+
+    //     return res.status(200).json({
+    //       message: "success",
+    //     });
+    //   }
+    // }
+
+  } catch (error) {
+    logger.error("WhatsApp callback error:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Failed to process WhatsApp message",
+    });
+  }
+});
 
 // Export the Express app as a single Cloud Function
 exports.api = onRequest({
   invoker: "public",
 }, app);
-
-

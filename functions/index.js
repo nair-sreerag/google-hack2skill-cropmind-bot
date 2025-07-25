@@ -12,7 +12,7 @@ const {onRequest} = require("firebase-functions/v2/https");
 const logger = require("firebase-functions/logger");
 const express = require("express");
 const cors = require("cors");
-const {sendWhatsappMessage, sendMessage, accountSid, authToken, bufferedToken} = require("./src/response");
+const {sendWhatsappMessage, sendMessage, accountSid, authToken, bufferedToken, sendSMS} = require("./src/response");
 
 // Import Dialogflow CX services
 const { sendMessageToAgent, healthCheck } = require("./src/chatEndpoint");
@@ -225,8 +225,10 @@ app.post("/whatsapp-callback", async (req, res) => {
         const [result] = await annotatorClient.annotateImage({
           image: { content: base64Image, },
           features: [
-            { type: 'LABEL_DETECTION' },
-            { type: 'TEXT_DETECTION' }, // optional
+            { type: 'OBJECT_LOCALIZATION' },  // Precise object detection with locations
+            { type: 'LABEL_DETECTION' },      // General categories
+            { type: 'TEXT_DETECTION' },       // Text extraction
+            { type: 'LOGO_DETECTION' },       // Brand logos
           ],
         });
 
@@ -251,8 +253,6 @@ app.post("/whatsapp-callback", async (req, res) => {
       }
 
     }
-
-
 
     
     // Generate session ID if not provided
@@ -284,12 +284,38 @@ app.post("/whatsapp-callback", async (req, res) => {
   }
 });
 
+app.post('/send-whatsapp-message', async (req, res) => {
+  const { message, to } = req.body;
+  console.log("message and to ", message, to);
+  const response = await sendWhatsappMessage(message, "whatsapp:+14155238886", `whatsapp:${to}`, );
+  
+  console.log("response >>> ", response);
+  
+  return res.json({success: true});
+});
+
+app.post('/send-sms', async (req, res) => {
+
+  console.log("send sms => ", req.body);
+
+  const { to, message } = req.body;
+
+  const response = await sendSMS(to, message);
+  
+  console.log("response =>> ", response);
+
+  return res.json({
+    success: true
+  })
+
+});
+
 // Export the Express app as a single Cloud Function
-// exports.api = onRequest({
-//   invoker: "public",
-// }, app);
+exports.api = onRequest({
+  invoker: "public",
+}, app);
 
 
-app.listen(5050, () => {
-  console.log("Server listening on port 5050")
-})
+// app.listen(5050, () => {
+//   console.log("Server listening on port 5050")
+// })

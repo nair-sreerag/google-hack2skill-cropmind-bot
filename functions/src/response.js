@@ -35,6 +35,13 @@ module.exports = {
     });
   },
 
+  sendSMS : async(to, message) => {
+    return await client.messages.create({
+      to,
+      from: '+17855092245',
+      body: message
+    })
+  }
 
 };
 

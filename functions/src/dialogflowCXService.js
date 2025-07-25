@@ -3,14 +3,25 @@ const { SessionsClient } = require("@google-cloud/dialogflow-cx");
 class DialogflowCXService {
   constructor() {
 
-    // TODO: CHANGE THESE VALUES
+    // TODO: CHANGE THESE VALUES - these works for the hackathon
 
     // Google Cloud Project configuration
-    this.projectId = "hack2skill-hackathon-85db2";
-    this.location = "us-central1"; // Adjust based on your agent location
-    this.agentId = "d2c9e580-7ede-409c-8371-139ee8980a1c"; // Your actual agent ID
-    this.languageCode = "en";
-    this.apiEndpoint = 'us-central1-dialogflow.googleapis.com';
+    // this.projectId = "hack2skill-hackathon-85db2";
+    // this.location = "us-central1"; // Adjust based on your agent location
+    // this.agentId = "d2c9e580-7ede-409c-8371-139ee8980a1c"; // Your actual agent ID
+    // this.languageCode = "en";
+    // this.apiEndpoint = 'us-central1-dialogflow.googleapis.com';
+
+
+
+    this.projectId = 'cropmind-89afe';
+    this.location = 'asia-south1';
+    this.agentId = '244195e6-3766-4120-885b-54716cf417db'
+    this.languageCode = 'en'
+    this.apiEndpoint = 'asia-south1-dialogflow.googleapis.com'
+
+
+
     
     // Initialize the Dialogflow CX Sessions client
     this.sessionClient = new SessionsClient({

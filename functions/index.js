@@ -217,10 +217,13 @@ app.post("/whatsapp-callback", async (req, res) => {
         });
 
         console.log("imageResponse => ", imageResponse);
+        
+        const openUrl = imageResponse.request.res.responseUrl;
+
+        console.log("openUrl => ", openUrl);
 
         const imageBuffer = Buffer.from(imageResponse.data, 'binary');
         const base64Image = imageBuffer.toString('base64');
-
         
         const [result] = await annotatorClient.annotateImage({
           image: { content: base64Image, },
@@ -312,6 +315,7 @@ app.post('/send-sms', async (req, res) => {
 
 // Export the Express app as a single Cloud Function
 exports.api = onRequest({
+  memory: '512MiB',
   invoker: "public",
 }, app);
 

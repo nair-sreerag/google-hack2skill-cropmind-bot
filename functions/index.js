@@ -149,26 +149,45 @@ app.post("/whatsapp-callback", async (req, res) => {
 
         console.log("audioBuffer => ", audioBuffer);
 
-        const [ response ] = await gtts.recognize({
-          audio: {
-            content: audioBuffer.toString('base64')
-          },
-          config: {
-            encoding: 'OGG_OPUS',
-            sampleRateHertz: 16000,
-            languageCode: 'en-US',
-            // enableAutomaticPunctuation: true,
-            // enableSeparateRecognitionPerChannel: true,
-          },
-        });
+        // const [ response ] = await gtts.recognize({
+        //   audio: {
+        //     content: audioBuffer.toString('base64')
+        //   },
+        //   config: {
+        //     encoding: 'OGG_OPUS',
+        //     sampleRateHertz: 16000,
+        //     languageCode: 'en-US',
+        //     // enableAutomaticPunctuation: true,
+        //     // enableSeparateRecognitionPerChannel: true,
+        //   },
+        // });
+
+
+        const request = {
+          contents: [{
+            role: 'user',
+            parts: [{
+              inline_data: {
+                mime_type: 'audio/ogg',
+                data: audioBuffer.toString('base64')
+              }
+            }, {
+              text: 'Please transcribe this audio file and return only the spoken text.'
+            }]
+          }]
+        };
+
+      const vertexResponse = await model.generateContent(request);
+      const transcripts = vertexResponse.response.candidates[0].content.parts[0].text;
+
 
         console.log("response => ", response);
 
 
-        const transcripts = response.results.map(r => {
-          console.log("got this transcript =>> ", r.alternatives[0].transcript);
-          return r.alternatives[0].transcript;
-        }).join('\n');
+        // const transcripts = response.results.map(r => {
+        //   console.log("got this transcript =>> ", r.alternatives[0].transcript);
+        //   return r.alternatives[0].transcript;
+        // }).join('\n');
 
         message = transcripts;
         

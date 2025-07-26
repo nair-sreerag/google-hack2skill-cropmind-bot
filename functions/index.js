@@ -14,6 +14,7 @@ const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
 const {sendWhatsappMessage, sendMessage, accountSid, authToken, bufferedToken, sendSMS} = require("./src/response");
+const { VertexAI } = require('@google-cloud/vertexai');
 
 // Import Dialogflow CX services
 const { sendMessageToAgent, healthCheck } = require("./src/chatEndpoint");
@@ -177,11 +178,20 @@ app.post("/whatsapp-callback", async (req, res) => {
           }]
         };
 
+        const vertexAI = new VertexAI({
+          project: 'cropmind-89afe',
+          location: 'asia-south1'
+        });
+
+        const model = vertexAI.getGenerativeModel({
+          model: 'gemini-2.5-flash' // Use appropriate model for audio
+        });
+
       const vertexResponse = await model.generateContent(request);
       const transcripts = vertexResponse.response.candidates[0].content.parts[0].text;
 
 
-        console.log("response => ", response);
+        console.log("response => ", transcripts);
 
 
         // const transcripts = response.results.map(r => {
@@ -381,7 +391,6 @@ app.post('/get-audio-response', (req, res) => {
     // });
 
     // Use Vertex AI for audio transcription instead of Speech-to-Text
-    const { VertexAI } = require('@google-cloud/vertexai');
     
     // Initialize Vertex AI
     const vertexAI = new VertexAI({

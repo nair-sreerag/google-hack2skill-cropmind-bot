@@ -551,13 +551,13 @@ app.post('/get-audio-response',
   */
 
 // Export the Express app as a single Cloud Function
-// exports.api = onRequest({
-//   memory: '512MiB',
-//   invoker: "public",
-//   timeoutSeconds: 60,
-// }, app);
+exports.api = onRequest({
+  memory: '512MiB',
+  invoker: "public",
+  timeoutSeconds: 60,
+}, app);
 
 
-app.listen(5050, () => {
-  console.log("Server listening on port 5050");
-});
+// app.listen(5050, () => {
+//   console.log("Server listening on port 5050");
+// });

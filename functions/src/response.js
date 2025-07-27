@@ -54,11 +54,12 @@ module.exports = {
   },
 
 
-  sendWhatsappMessage: async (body, from, to) => {
+  sendWhatsappMessage: async (body, from, to, meta = {}) => {
     return await credentials[0].client.messages.create({
       body, // Message text
       from, // Your Twilio WhatsApp number
-      to, // Recipient's WhatsApp number
+      to, // Recipient's WhatsApp number,
+      ...meta,
     });
   },
 

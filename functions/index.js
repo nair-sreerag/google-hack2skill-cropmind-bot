@@ -27,6 +27,7 @@ const { fileParser } = require('express-multipart-file-parser')
 
 
 const vision = require('@google-cloud/vision');
+const { textToAudioComplete } = require("./src/textToAudioService");
 const annotatorClient = new vision.ImageAnnotatorClient();
 
 // For cost control, you can set the maximum number of containers that can be
@@ -127,6 +128,7 @@ app.post("/whatsapp-callback", async (req, res) => {
 
     const dialogflowService = new DialogflowCXService();
 
+    let sendResponseInAudio = false;
 
     switch(MediaContentType0) {
 
@@ -142,6 +144,7 @@ app.post("/whatsapp-callback", async (req, res) => {
           }
         });
 
+        sendResponseInAudio = true;
 
         // audioResponse = await axios.get('https://storage.googleapis.com/cloud-samples-tests/speech/brooklyn.flac',{
         //   responseType: 'arraybuffer',
@@ -275,7 +278,30 @@ app.post("/whatsapp-callback", async (req, res) => {
 
     console.log("response ->> ", JSON.stringify(response));
 
-    await sendWhatsappMessage(response.messages[0], To, From, );
+    if(sendResponseInAudio){
+
+      const options = {
+        bucketName:  'cropmind-89afe-vertex-audio',
+        // voice: finalVoice,
+        fileName: `fileName - ${new Date().getTime()}`,
+        saveToFirestore: true,
+        metadata: {
+          // ...metadata,
+          requestSource: 'api',
+          requestTime: new Date().toISOString()
+        }
+      };
+
+
+      const result = await textToAudioComplete(response.messages[0], {});
+
+      console.log("result => ", result);
+      await sendWhatsappMessage("This is the audio response", To, From, {mediaUrl: [result.publicUrl]});
+    } else {
+      await sendWhatsappMessage(response.messages[0], To, From, );
+    }
+
+    // await sendWhatsappMessage(response.messages[0], To, From, );
 
     return res.json({
       success: true
@@ -525,13 +551,13 @@ app.post('/get-audio-response',
   */
 
 // Export the Express app as a single Cloud Function
-exports.api = onRequest({
-  memory: '512MiB',
-  invoker: "public",
-  timeoutSeconds: 60,
-}, app);
+// exports.api = onRequest({
+//   memory: '512MiB',
+//   invoker: "public",
+//   timeoutSeconds: 60,
+// }, app);
 
 
-// app.listen(5050, () => {
-//   console.log("Server listening on port 5050");
-// });
+app.listen(5050, () => {
+  console.log("Server listening on port 5050");
+});

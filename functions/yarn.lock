@@ -205,6 +205,13 @@
     teeny-request "^9.0.0"
     uuid "^8.0.0"
 
+"@google-cloud/text-to-speech@^6.2.0":
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/@google-cloud/text-to-speech/-/text-to-speech-6.2.0.tgz#5179c16ac1bd3ad7ad1dc88249a2734af1ec5ea7"
+  integrity sha512-CsmGFNZVL0mPrgcrkBPJ5LB8TPEKiPsER0N5h3nAkkPIeyAGGn3YwuRWyQhDYI5/XWLp11LlDEWqL8B14aYtNg==
+  dependencies:
+    google-gax "^5.0.0"
+
 "@google-cloud/vertexai@^1.10.0":
   version "1.10.0"
   resolved "https://registry.yarnpkg.com/@google-cloud/vertexai/-/vertexai-1.10.0.tgz#86b76cf11190e01b41aedbc3103441c4f596ded3"

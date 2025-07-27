@@ -10,16 +10,16 @@ if (!admin.apps.length) {
 
 const db = getFirestore();
 const storage = new Storage({
-  projectId: 'cropmind-89afe'
+  projectId: 'hack2skill-hackathon-85db2'
 });
 
 const ttsClient = new TextToSpeechClient({
-  projectId: 'cropmind-89afe'
+  projectId: 'hack2skill-hackathon-85db2'
 });
 
 // Default configuration
 const DEFAULT_CONFIG = {
-  bucketName: 'cropmind-89afe-vertex-audio',
+  bucketName: 'hack2skill-vertex-audio',
   voice: {
     languageCode: 'en-US',
     name: 'en-US-Standard-A',

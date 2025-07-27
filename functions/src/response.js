@@ -1,8 +1,8 @@
 
 const axios = require("axios");
 const twilio = require("twilio");
-const accountSid = "AC5eb00789706e66f99a5845f749a0e6bb";
-const authToken = "b27bb9337b344a797aed211243b178d9";
+const accountSid = "AC867be7e77308eab28de571ac7174ef57";
+const authToken = "6ee1e482c2616f39ea8d760a576b7e5a";
 
 const credentials = [
   {
@@ -55,7 +55,8 @@ module.exports = {
 
 
   sendWhatsappMessage: async (body, from, to, meta = {}) => {
-    return await credentials[0].client.messages.create({
+    console.log("sending whatsapp message", body, from, to, meta);
+    return await credentials[1].client.messages.create({
       body, // Message text
       from, // Your Twilio WhatsApp number
       to, // Recipient's WhatsApp number,
@@ -64,9 +65,9 @@ module.exports = {
   },
 
   sendSMS : async(to, message) => {
-    return await credentials[0].client.messages.create({
+    return await credentials[1].client.messages.create({
       to,
-      from: '+17855092245',
+      from: '+12185598990',
       body: message
     })
   }

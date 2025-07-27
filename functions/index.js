@@ -276,9 +276,11 @@ app.post("/whatsapp-callback", async (req, res) => {
       languageCode || 'en'
     );
 
-    console.log("response ->> ", JSON.stringify(response));
+    console.log("response >>->> ", sendResponseInAudio, JSON.stringify(response));
 
     if(sendResponseInAudio){
+
+      console.log("sending processed audio")
 
       const options = {
         bucketName:  'cropmind-89afe-vertex-audio',

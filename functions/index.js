@@ -23,6 +23,8 @@ const { default: axios } = require("axios");
 const speech = require('@google-cloud/speech').v1p1beta1;
 const gtts = new speech.SpeechClient();
 
+const { fileParser } = require('express-multipart-file-parser')
+
 
 const vision = require('@google-cloud/vision');
 const annotatorClient = new vision.ImageAnnotatorClient();
@@ -314,29 +316,22 @@ app.post('/send-sms', async (req, res) => {
 
 });
 
-app.post('/get-audio-response', (req, res) => {
-  // Handle multer upload with error handling
-  upload.single('audio')(req, res, async (err) => {
-    if (err instanceof multer.MulterError) {
-      console.error("Multer error:", err);
-      return res.status(400).json({
-        success: false,
-        error: `File upload error: ${err.message}`
-      });
-    } else if (err) {
-      console.error("Upload error:", err);
-      return res.status(400).json({
-        success: false,
-        error: err.message
-      });
-    }
+app.use(fileParser());
 
+app.post('/get-audio-response', 
+  // upload.single('audio'),
+   async (req, res) => {
   try {
-    console.log("Get audio response called", req.file);
+    // Handle multer errors (from middleware)
+    // If multer error occurred, it will be handled by Express error handler, but we can check for file size etc. here if needed
+
+    req.file = req.files[0];
+
+    console.log("Get audio response called", req.file, req.files.length);
     // Handle both form-data and JSON payload
     let audioBuffer;
     let mimeType = 'audio/ogg'; // default
-    
+
     // Check if request contains form-data (multipart) with uploaded file
     if (req.file) {
       // Handle file upload via form-data using multer
@@ -352,7 +347,7 @@ app.post('/get-audio-response', (req, res) => {
       const audioData = req.body.audio;
       mimeType = req.body.mimeType || 'audio/ogg';
       console.log("Received audio data via JSON payload");
-      
+
       try {
         audioBuffer = Buffer.from(audioData, 'base64');
         console.log("Converted base64 audio to buffer, size:", audioBuffer.length);
@@ -369,7 +364,7 @@ app.post('/get-audio-response', (req, res) => {
         error: "Audio file is required (either via form-data 'audio' field or JSON 'audio' property)"
       });
     }
-    
+
     // Validate audio buffer
     if (!audioBuffer || audioBuffer.length === 0) {
       return res.status(400).json({
@@ -377,35 +372,28 @@ app.post('/get-audio-response', (req, res) => {
         error: "Audio buffer is empty or invalid"
       });
     }
-    
+
     console.log("Audio buffer prepared successfully:", {
       size: audioBuffer.length,
       mimeType: mimeType
     });
 
-
-    // return res.json({
-    //   success: true,
-    //   audioBuffer: audioBuffer,
-    //   mimeType: mimeType
-    // });
-
     // Use Vertex AI for audio transcription instead of Speech-to-Text
-    
+
     // Initialize Vertex AI
     const vertexAI = new VertexAI({
       project: 'cropmind-89afe',
       location: 'asia-south1'
     });
-    
+
     // Get the generative model for audio processing
     const model = vertexAI.getGenerativeModel({
       model: 'gemini-2.5-flash' // Use appropriate model for audio
     });
-    
+
     // Convert audio buffer to base64 for Vertex AI
     const audioBase64 = audioBuffer.toString('base64');
-    
+
     // Create request for Vertex AI
     const request = {
       contents: [{
@@ -420,13 +408,13 @@ app.post('/get-audio-response', (req, res) => {
         }]
       }]
     };
-    
+
     // Generate content using Vertex AI
     const vertexResponse = await model.generateContent(request);
     const transcripts = vertexResponse.response.candidates[0].content.parts[0].text;
-    
+
     console.log("Vertex AI transcription:", transcripts);
-    
+
     // Skip the Google Speech-to-Text processing below and use Vertex AI result
     if (!transcripts) {
       return res.status(400).json({
@@ -434,13 +422,13 @@ app.post('/get-audio-response', (req, res) => {
         error: "Could not transcribe audio using Vertex AI"
       });
     }
-    
+
     console.log("Final transcript from Vertex AI:", transcripts);
 
     // Send transcribed text to Dialogflow CX
     const dialogflowService = new DialogflowCXService();
     const sessionId = `audio_session_${Date.now()}`;
-    
+
     const dialogflowResponse = await dialogflowService.sendMessage(
       transcripts,
       sessionId,
@@ -457,13 +445,20 @@ app.post('/get-audio-response', (req, res) => {
     });
 
   } catch (error) {
+    // Handle Multer errors (if thrown as exceptions)
+    if (error instanceof multer.MulterError) {
+      console.error("Multer error:", error);
+      return res.status(400).json({
+        success: false,
+        error: `File upload error: ${error.message}`
+      });
+    }
     console.error("Audio processing error:", error);
     return res.status(500).json({
       success: false,
       error: "Failed to process audio with Vertex AI: " + error.message
     });
   }
-});
 });
 
 
@@ -530,12 +525,13 @@ app.post('/get-audio-response', (req, res) => {
   */
 
 // Export the Express app as a single Cloud Function
-// exports.api = onRequest({
-//   memory: '512MiB',
-//   invoker: "public",
-// }, app);
+exports.api = onRequest({
+  memory: '512MiB',
+  invoker: "public",
+  timeoutSeconds: 60,
+}, app);
 
 
-app.listen(5050, () => {
-  console.log("Server listening on port 5050");
-});
+// app.listen(5050, () => {
+//   console.log("Server listening on port 5050");
+// });
